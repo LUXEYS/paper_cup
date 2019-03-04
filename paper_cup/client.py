@@ -75,6 +75,3 @@ class SQSClient:
     sqs_queue_attrs = self.sqs.get_queue_attributes(QueueUrl=queue_url, AttributeNames=['All'])['Attributes']
     get_queue_arn = sqs_queue_attrs['QueueArn']
     return get_queue_arn
-
-
-
