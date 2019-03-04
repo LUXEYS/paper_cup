@@ -7,7 +7,6 @@ def readme():
 
 setup(name='paper_cup',
       version='19.3.4',
-      url='labola.jp',
       license='MIT',
       author='Luxeys',
       author_email='bryan@luxeys.com',
