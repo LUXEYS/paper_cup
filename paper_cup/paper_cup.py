@@ -3,7 +3,7 @@ import json
 from .client import SNSClient, SQSClient
 
 
-class PaperCup():
+class PaperCup(object):
   """Publisher and subscribe settings."""
   PC_TOPIC = 'topic' # Publisher
   PC_QUEUE = 'my_queue' # Consumer
