@@ -6,7 +6,7 @@ def readme():
             return f.read()
 
 setup(name='paper_cup',
-      version='19.3.4',
+      version='19.3.5',
       license='MIT',
       author='Luxeys',
       author_email='bryan@luxeys.com',
