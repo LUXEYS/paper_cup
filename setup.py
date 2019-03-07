@@ -7,8 +7,9 @@ def readme():
 
 
 setup(name='paper_cup',
-      version='19.3.5',
+      version='19.3.7',
       license='MIT',
+      homepage='https://github.com/LUXEYS/paper_cup',
       author='Luxeys',
       author_email='bryan@luxeys.com',
       description='Micro-service communication system powered with paper cup engine!',
