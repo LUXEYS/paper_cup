@@ -49,6 +49,10 @@ class PaperCup(object):
 
   def run(self):
     """Read the message in queue and use the class that will handle the action."""
+
+    if not self.PC_ENABLE:
+      return False
+
     queue = self.sqs.get_queue_by_name(self.PC_QUEUE)
     messages = queue.receive_messages(WaitTimeSeconds=20, MaxNumberOfMessages=10, VisibilityTimeout=30)
     # get all the cosumer classes that will handle actions
