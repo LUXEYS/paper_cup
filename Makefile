@@ -5,4 +5,4 @@ test:
 package_upload_test:
 	twine upload --verbose --repository-url https://test.pypi.org/legacy/ dist/*
 package_upload:
-	twine upload dist/*
+	twine upload --verbose --repository pypi dist/*
