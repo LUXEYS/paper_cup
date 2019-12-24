@@ -69,7 +69,9 @@ class PaperCup(object):
       if sender in self.PC_LISTEN:
         consumer_action_class = msg.get('consumer_action_class')
         action_class = action_classes.get(consumer_action_class)
-        action_class.do_action(msg, action)
+        # only handle the action with consumers
+        if action_class:
+          action_class.do_action(msg, action)
 
       message.delete()
 
