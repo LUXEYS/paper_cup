@@ -54,26 +54,29 @@ class PaperCup(object):
       return False
 
     queue = self.sqs.get_queue_by_name(self.PC_QUEUE)
-    messages = queue.receive_messages(WaitTimeSeconds=20, MaxNumberOfMessages=10, VisibilityTimeout=30)
     # get all the cosumer classes that will handle actions
     action_classes = {cls.__name__: cls() for cls in self.__class__.__subclasses__() if 'Consume' in cls.__name__}
+    messages = queue.receive_messages(WaitTimeSeconds=20, MaxNumberOfMessages=10, VisibilityTimeout=30)
 
-    for message in messages:
-      body = json.loads(message.body)
-      msg = json.loads(body['Message'])
+    while messages:
+      for message in messages:
+        body = json.loads(message.body)
+        msg = json.loads(body['Message'])
 
-      action = msg.get('action')
-      sender = msg.get('sender')
+        action = msg.get('action')
+        sender = msg.get('sender')
 
-      # check that the consumer listen from the sender and do the action
-      if sender in self.PC_LISTEN:
-        consumer_action_class = msg.get('consumer_action_class')
-        action_class = action_classes.get(consumer_action_class)
-        # only handle the action with consumers
-        if action_class:
-          action_class.do_action(msg, action)
+        # check that the consumer listen from the sender and do the action
+        if sender in self.PC_LISTEN:
+          consumer_action_class = msg.get('consumer_action_class')
+          action_class = action_classes.get(consumer_action_class)
+          # only handle the action with consumers
+          if action_class:
+            action_class.do_action(msg, action)
 
-      message.delete()
+        message.delete()
+
+      messages = queue.receive_messages(MaxNumberOfMessages=10, VisibilityTimeout=30)
 
   def do_action(self, message, action):
     """Call the action of the consumer class."""
