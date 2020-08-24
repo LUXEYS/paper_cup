@@ -5,38 +5,31 @@ from .client import SNSClient, SQSClient
 
 class PaperCup(object):
   """Publisher and subscribe settings."""
-  PC_TOPIC = 'topic' # Publisher
-  PC_QUEUE = 'my_queue' # Consumer
   PC_ENABLE = True
-  PC_LISTEN = []
-  PC_SENDER = 'this_app_name'
+  PC_TOPIC = 'topic' # Publisher (SNS)
+  PC_QUEUE = 'queue' # Consumer (SQS)
+  PC_LISTEN = [] # list of service name for message to process ex: cas listen only 'booking' so for cas PC_LISTEN = ['booking']
+  PC_SENDER = 'service' # name of the app that send the message ex: 'booking'
 
-  # localhost
-  PC_AWS_ACCESS_KEY_ID = 'id'
-  PC_AWS_SECRET_ACCESS_KEY_ID = 'password'
-  PC_AWS_LOCAL_ENDPOINT = 'http://localhost:1234'
+  # default values set for test
+  PC_AWS_ACCESS_KEY_ID = 'test'
+  PC_AWS_SECRET_ACCESS_KEY_ID = 'test'
+  PC_AWS_LOCAL_ENDPOINT = 'http://192.168.56.1:9010' # we use moto
 
   def __init__(self):
-    sns = SNSClient(self.PC_AWS_LOCAL_ENDPOINT, aws_access_key_id=self.PC_AWS_ACCESS_KEY_ID, aws_secret_access_key=self.PC_AWS_SECRET_ACCESS_KEY_ID)
-    self.sns = sns
-
-    # option to disable the call to aws
+    """Create a PaperCup instance with a publisher and a consumer."""
     if self.PC_ENABLE:
-      self.topic_arn = sns.get_topic_arn(self.PC_TOPIC)
+      self.sns = SNSClient(endpoint_url=self.PC_AWS_LOCAL_ENDPOINT, aws_access_key_id=self.PC_AWS_ACCESS_KEY_ID, aws_secret_access_key=self.PC_AWS_SECRET_ACCESS_KEY_ID)
+      self.topic_arn = self.sns.get_topic_arn(self.PC_TOPIC)
 
-    sqs = SQSClient(self.PC_AWS_LOCAL_ENDPOINT, aws_access_key_id=self.PC_AWS_ACCESS_KEY_ID, aws_secret_access_key=self.PC_AWS_SECRET_ACCESS_KEY_ID)
-    self.sqs = sqs
+      self.sqs = SQSClient(endpoint_url=self.PC_AWS_LOCAL_ENDPOINT, aws_access_key_id=self.PC_AWS_ACCESS_KEY_ID, aws_secret_access_key=self.PC_AWS_SECRET_ACCESS_KEY_ID)
 
   def publish(self, message, action):
-    """Send message to sqs for user updates."""
-
-    # option to disable the call to aws
-    if not self.PC_ENABLE:
-      return False
-
-    message = self._add_more_data(message, action)
-    message = json.dumps(message)
-    self.sns.publish(message, self.topic_arn)
+    """Send message to sns."""
+    if self.sns:
+      message = self._add_more_data(message, action)
+      message = json.dumps(message)
+      self.sns.publish(message, self.topic_arn)
 
   def _add_more_data(self, message, action):
     """Add necessary data to detemine the consumer and action function."""
@@ -47,38 +40,66 @@ class PaperCup(object):
     message['sender'] = self.PC_SENDER
     return message
 
+  def bulk_publish(self, list_message, list_action):
+    """Send message by bulk to sns. limit the list to 50 messages."""
+    message = ''
+    msg_list = []
+    if self.sns:
+      for i, one_message in enumerate(list_message):
+        one_message = self._add_more_data(one_message, list_action[i])
+        temp_message = json.dumps(one_message)
+        message = json.dumps(msg_list)
+        # check max size of the message to publish under the limit
+        if (len(message) + len(temp_message)) > 256000:
+          self.sns.publish(message, self.topic_arn)
+          msg_list = [one_message, ]
+        else:
+          msg_list.append(one_message)
+
+      if message:
+        self.sns.publish(message, self.topic_arn)
+
   def run(self):
-    """Read the message in queue and use the class that will handle the action."""
+    """Deprecated as bad naming."""
+    return self.consume()
 
-    if not self.PC_ENABLE:
-      return False
+  def consume(self):
+    """Read the message in queue and use the class that will handle the action. (Consume the message)"""
+    if self.sqs:
+      queue = self.sqs.get_queue_by_name(self.PC_QUEUE)
+      # get all the consumer classes that will handle actions
+      action_classes = {cls.__name__: cls() for cls in self.__class__.__subclasses__() if 'Consume' in cls.__name__}
+      messages = queue.receive_messages(WaitTimeSeconds=20, MaxNumberOfMessages=10, VisibilityTimeout=30)
 
-    queue = self.sqs.get_queue_by_name(self.PC_QUEUE)
-    # get all the cosumer classes that will handle actions
-    action_classes = {cls.__name__: cls() for cls in self.__class__.__subclasses__() if 'Consume' in cls.__name__}
-    messages = queue.receive_messages(WaitTimeSeconds=20, MaxNumberOfMessages=10, VisibilityTimeout=30)
+      while messages:
+        for message in messages:
+          body = json.loads(message.body)
+          msg = json.loads(body['Message'])
 
-    while messages:
-      for message in messages:
-        body = json.loads(message.body)
-        msg = json.loads(body['Message'])
+          if isinstance(msg, list):
+            for one_msg in msg:
+              self._consume_msg(one_msg, action_classes)
+          else:
+            self._consume_msg(msg, action_classes)
 
-        action = msg.get('action')
-        sender = msg.get('sender')
+          message.delete()
 
-        # check that the consumer listen from the sender and do the action
-        if sender in self.PC_LISTEN:
-          consumer_action_class = msg.get('consumer_action_class')
-          action_class = action_classes.get(consumer_action_class)
-          # only handle the action with consumers
-          if action_class:
-            action_class.do_action(msg, action)
+        messages = queue.receive_messages(MaxNumberOfMessages=10, VisibilityTimeout=30)
 
-        message.delete()
+  def _consume_msg(self, msg, action_classes):
+    """Common call to consume a message."""
+    action = msg.get('action')
+    sender = msg.get('sender')
 
-      messages = queue.receive_messages(MaxNumberOfMessages=10, VisibilityTimeout=30)
+    # check that the consumer listen from the sender and do the action
+    if sender in self.PC_LISTEN:
+      consumer_action_class = msg.get('consumer_action_class')
+      action_class = action_classes.get(consumer_action_class)
+      # only handle the action with consumers
+      if action_class:
+        action_class._do_action(msg, action)
 
-  def do_action(self, message, action):
+  def _do_action(self, message, action):
     """Call the action of the consumer class."""
     method = getattr(self, action)
     method(message)
