@@ -1,4 +1,5 @@
 from unittest import TestCase
+import warnings
 
 from paper_cup.client import SNSClient, SQSClient
 from paper_cup.paper_cup import PaperCup
@@ -24,6 +25,18 @@ class TestSQSClient(TestCase):
 
 
 class TestPaperCup(TestCase):
+
+  def setUp(self):
+    """Silent the warnings as explained here:
+        https://github.com/boto/boto3/issues/454
+      with solution from here:
+        https://stackoverflow.com/questions/26563711/disabling-python-3-2-resourcewarning
+    """
+    warnings.simplefilter("ignore", ResourceWarning)
+
+  def tearDown(self):
+    """Put back the warnings."""
+    warnings.simplefilter("default", ResourceWarning)
 
   def test_instance(self):
     """Check that the instance initialize correctly."""
