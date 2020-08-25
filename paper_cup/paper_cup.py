@@ -8,7 +8,7 @@ class PaperCup(object):
   PC_ENABLE = True
   PC_TOPIC = 'topic' # Publisher (SNS)
   PC_QUEUE = 'queue' # Consumer (SQS)
-  PC_LISTEN = [] # list of service name for message to process ex: cas listen only 'booking' so for cas PC_LISTEN = ['booking']
+  PC_LISTEN = ['service'] # list of service name for message to process ex: cas listen only 'booking' so for cas PC_LISTEN = ['booking']
   PC_SENDER = 'service' # name of the app that send the message ex: 'booking'
 
   # default values set for test
@@ -70,7 +70,6 @@ class PaperCup(object):
       # get all the consumer classes that will handle actions
       action_classes = {cls.__name__: cls() for cls in self.__class__.__subclasses__() if 'Consume' in cls.__name__}
       messages = queue.receive_messages(WaitTimeSeconds=20, MaxNumberOfMessages=10, VisibilityTimeout=30)
-
       while messages:
         for message in messages:
           body = json.loads(message.body)
@@ -105,7 +104,7 @@ class PaperCup(object):
     method(message)
 
 
-class PCPublisher(PaperCup):
+class PublishPC(PaperCup):
   """Public class for Publisher."""
 
   def __init__(self, *args, **kwargs):
@@ -115,8 +114,8 @@ class PCPublisher(PaperCup):
       self.topic_arn = self.sns.get_topic_arn(self.PC_TOPIC)
 
 
-class PCConsumer(PaperCup):
-  """Public class for Consumer."""
+class ConsumePC(PaperCup):
+  """Public class for Consume ."""
 
   def __init__(self, *args, **kwargs):
     """"""

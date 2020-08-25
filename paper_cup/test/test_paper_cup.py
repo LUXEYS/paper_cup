@@ -53,12 +53,43 @@ class TestPaperCup(TestCase):
     # clean the queue and topic
     clean_after(paper_cup)
 
+  def test_bulk_consume(self):
+    """"Check that we can read bulk data."""
+
+    list_message = [DummyMessage(), DummyMessage(qwe="qwe", abc="abc", number=1)]
+    list_action = ['index', 'delete']
+    paper_cup = pc_instance()
+    paper_cup.bulk_publish(list_message, list_action)
+
+    list_result = []
+
+    class ConsumePaperCup(PaperCup):
+      """Dummy class to have consume in the name"""
+
+      def index(self, message):
+        """Dummy method to test the consume action."""
+        list_result.append(message)
+
+      def delete(self, message):
+        """Dummy method to test the consume action."""
+        list_result.append(message)
+
+    PaperCup().run()
+    # check that we have the 2 messages in the list i.e that we consume correclty the two actions
+    self.assertEqual(len(list_result), 2)
+
+
+# ################ Other utils for test maybe better to move to their own file
+
 
 def pc_instance():
   """Build and return a ready to use paper cup instance."""
   SNSClient(PaperCup.PC_AWS_LOCAL_ENDPOINT).create_topic(PaperCup.PC_TOPIC)
 
-  pc_instance = PaperCup()
+  class PublishPaperCup(PaperCup):
+    """Dummy class to have Publish key in the name."""
+
+  pc_instance = PublishPaperCup()
 
   # delete the queue if the unit test fail the queue may be here
   try:
