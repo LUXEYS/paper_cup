@@ -16,6 +16,10 @@ class PaperCup(object):
   PC_AWS_SECRET_ACCESS_KEY_ID = 'test'
   PC_AWS_LOCAL_ENDPOINT = 'http://192.168.56.1:9010' # we use moto
 
+  # set default attribut values
+  sns = False
+  sqs = False
+
   def __init__(self):
     """Deprecated As we never need Publish and Consume in same time."""
     if self.PC_ENABLE:
