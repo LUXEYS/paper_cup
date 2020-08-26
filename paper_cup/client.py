@@ -4,12 +4,8 @@ import boto3
 class SNSClient:
   """Common sns usages."""
 
-  def __init__(self, endpoint_url=None, region='ap-northeast-1', aws_access_key_id=None, aws_secret_access_key=None):
+  def __init__(self, endpoint_url, region='ap-northeast-1', aws_access_key_id=None, aws_secret_access_key=None):
     """Constructor with already set in options."""
-    from paper_cup import PaperCup
-
-    if endpoint_url is None:
-      endpoint_url = PaperCup.PC_AWS_LOCAL_ENDPOINT
 
     session = boto3.Session(region_name=region, aws_access_key_id=aws_secret_access_key, aws_secret_access_key=aws_secret_access_key)
     self.sns = session.client('sns', endpoint_url=endpoint_url)
@@ -62,13 +58,8 @@ class SNSClient:
 class SQSClient:
   """Common sqs usages."""
 
-  def __init__(self, endpoint_url=None, region='ap-northeast-1', aws_access_key_id=None, aws_secret_access_key=None):
+  def __init__(self, endpoint_url, region='ap-northeast-1', aws_access_key_id=None, aws_secret_access_key=None):
     """Constructor with already set in options."""
-    from paper_cup import PaperCup
-
-    if endpoint_url is None:
-      endpoint_url = PaperCup.PC_AWS_LOCAL_ENDPOINT
-
     session = boto3.Session(region_name=region, aws_access_key_id=aws_secret_access_key, aws_secret_access_key=aws_secret_access_key)
     self.sqs = session.client('sqs', endpoint_url=endpoint_url)
     self.sqs_obj = session.resource('sqs', endpoint_url=endpoint_url)

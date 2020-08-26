@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name='paper_cup',
-    version='20.8.25',
+    version='20.8.26',
     license='MIT',
     homepage='https://github.com/LUXEYS/paper_cup',
     author='Luxeys',
@@ -18,10 +18,14 @@ setup(
     long_description_content_type="text/markdown",
     long_description=long_description,
     classifiers=[
-        'Development Status :: 3 - Beta',
+        'Development Status :: 4 - Beta',
         'License :: OSI Approved :: MIT License',
-        'Programming Language :: Python',
         'Topic :: Internet :: WWW/HTTP',
+        'Intended Audience :: Developers',
+        'Operating System :: OS Independent',
+        'Programming Language :: Python',
+        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3'
     ],
     zip_safe=False,
 )

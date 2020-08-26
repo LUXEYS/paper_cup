@@ -23,10 +23,10 @@ class PaperCup(object):
   def __init__(self):
     """Deprecated As we never need Publish and Consume in same time."""
     if self.PC_ENABLE:
-      self.sns = SNSClient(endpoint_url=self.PC_AWS_LOCAL_ENDPOINT, aws_access_key_id=self.PC_AWS_ACCESS_KEY_ID, aws_secret_access_key=self.PC_AWS_SECRET_ACCESS_KEY_ID)
+      self.sns = SNSClient(self.PC_AWS_LOCAL_ENDPOINT, aws_access_key_id=self.PC_AWS_ACCESS_KEY_ID, aws_secret_access_key=self.PC_AWS_SECRET_ACCESS_KEY_ID)
       self.topic_arn = self.sns.get_topic_arn(self.PC_TOPIC)
 
-      self.sqs = SQSClient(endpoint_url=self.PC_AWS_LOCAL_ENDPOINT, aws_access_key_id=self.PC_AWS_ACCESS_KEY_ID, aws_secret_access_key=self.PC_AWS_SECRET_ACCESS_KEY_ID)
+      self.sqs = SQSClient(self.PC_AWS_LOCAL_ENDPOINT, aws_access_key_id=self.PC_AWS_ACCESS_KEY_ID, aws_secret_access_key=self.PC_AWS_SECRET_ACCESS_KEY_ID)
 
   def publish(self, message, action):
     """Send message to sns."""
@@ -114,7 +114,7 @@ class PublishPC(PaperCup):
   def __init__(self, *args, **kwargs):
     """"""
     if self.PC_ENABLE:
-      self.sns = SNSClient(endpoint_url=self.PC_AWS_LOCAL_ENDPOINT, aws_access_key_id=self.PC_AWS_ACCESS_KEY_ID, aws_secret_access_key=self.PC_AWS_SECRET_ACCESS_KEY_ID)
+      self.sns = SNSClient(self.PC_AWS_LOCAL_ENDPOINT, aws_access_key_id=self.PC_AWS_ACCESS_KEY_ID, aws_secret_access_key=self.PC_AWS_SECRET_ACCESS_KEY_ID)
       self.topic_arn = self.sns.get_topic_arn(self.PC_TOPIC)
 
 
@@ -124,7 +124,7 @@ class ConsumePC(PaperCup):
   def __init__(self, *args, **kwargs):
     """"""
     if self.PC_ENABLE:
-      self.sqs = SQSClient(endpoint_url=self.PC_AWS_LOCAL_ENDPOINT, aws_access_key_id=self.PC_AWS_ACCESS_KEY_ID, aws_secret_access_key=self.PC_AWS_SECRET_ACCESS_KEY_ID)
+      self.sqs = SQSClient(self.PC_AWS_LOCAL_ENDPOINT, aws_access_key_id=self.PC_AWS_ACCESS_KEY_ID, aws_secret_access_key=self.PC_AWS_SECRET_ACCESS_KEY_ID)
       self.sqs_queue = self.sqs.get_queue_by_name(self.PC_QUEUE)
 
   def consume(self):
