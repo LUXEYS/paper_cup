@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name='paper_cup',
-    version='20.8.26',
+    version='20.8.27',
     license='MIT',
     homepage='https://github.com/LUXEYS/paper_cup',
     author='Luxeys',
