@@ -9,6 +9,7 @@ setup(
     license='MIT',
     homepage='https://github.com/LUXEYS/paper_cup',
     author='Luxeys',
+    url='https://github.com/LUXEYS/paper_cup',
     author_email='bryan@luxeys.com',
     description='Micro-service communication system powered with paper cup engine!',
     packages=find_packages(),
