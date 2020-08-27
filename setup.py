@@ -4,26 +4,29 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setup(
-      name='paper_cup',
-      version='20.6.25',
-      license='MIT',
-      homepage='https://github.com/LUXEYS/paper_cup',
-      author='Luxeys',
-      author_email='bryan@luxeys.com',
-      description='Micro-service communication system powered with paper cup engine!',
-      packages=find_packages(),
-      install_requires=[
-          'boto3',
-      ],
-      long_description_content_type="text/markdown",
-      long_description=long_description,
-      classifiers=[
-        'Development Status :: 3 - Alpha',
+    name='paper_cup',
+    version='20.8.27',
+    license='MIT',
+    homepage='https://github.com/LUXEYS/paper_cup',
+    author='Luxeys',
+    url='https://github.com/LUXEYS/paper_cup',
+    author_email='bryan@luxeys.com',
+    description='Micro-service communication system powered with paper cup engine!',
+    packages=find_packages(),
+    install_requires=[
+        'boto3',
+    ],
+    long_description_content_type="text/markdown",
+    long_description=long_description,
+    classifiers=[
+        'Development Status :: 4 - Beta',
         'License :: OSI Approved :: MIT License',
-        'Programming Language :: Python',
         'Topic :: Internet :: WWW/HTTP',
-      ],
-      zip_safe=False,
-      test_suite='nose.collector',
-      tests_require=['nose'],
+        'Intended Audience :: Developers',
+        'Operating System :: OS Independent',
+        'Programming Language :: Python',
+        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3'
+    ],
+    zip_safe=False,
 )
