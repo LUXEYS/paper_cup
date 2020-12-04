@@ -5,16 +5,16 @@ with open("README.md", "r") as fh:
 
 setup(
     name='paper_cup',
-    version='20.8.27',
+    version='20.12.4',
     license='MIT',
     homepage='https://github.com/LUXEYS/paper_cup',
     author='Luxeys',
     url='https://github.com/LUXEYS/paper_cup',
     author_email='bryan@luxeys.com',
-    description='Micro-service communication system powered with paper cup engine!',
+    description='Microservices communication system powered with paper cup engine!',
     packages=find_packages(),
     install_requires=[
-        'boto3',
+        'boto3==1.9.170',
     ],
     long_description_content_type="text/markdown",
     long_description=long_description,
