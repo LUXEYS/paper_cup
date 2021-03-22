@@ -90,7 +90,7 @@ class PaperCup(object):
         messages = queue.receive_messages(MaxNumberOfMessages=10, VisibilityTimeout=30)
 
   def _consume_msg(self, msg, action_classes):
-    """Common call to consume a message."""
+    """Common call to consume the queue."""
     action = msg.get('action')
     sender = msg.get('sender')
 
@@ -119,7 +119,7 @@ class PublishPC(PaperCup):
 
 
 class ConsumePC(PaperCup):
-  """Public class for Consume ."""
+  """Public class for Consume."""
 
   def __init__(self, *args, **kwargs):
     """"""
@@ -128,7 +128,7 @@ class ConsumePC(PaperCup):
       self.sqs_queue = self.sqs.get_queue_by_name(self.PC_QUEUE)
 
   def consume(self):
-    """Read the message in queue and use the class that will handle the action. (Consume the message)"""
+    """Read the message in queue and use the class that will handle the action."""
     if self.sqs_queue:
       # get all the consumer classes that will handle actions
       action_classes = {cls.__name__: cls() for cls in self.__class__.__subclasses__() if 'Consume' in cls.__name__}
