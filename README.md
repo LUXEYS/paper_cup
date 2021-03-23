@@ -10,7 +10,7 @@ Paper Cup Pypi
 --------
 
 #### dependencies
-> pip3 install -r requirements.txt
+> pip3 install -r requirements/dev.txt
 
 #### test
 > make test
