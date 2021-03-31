@@ -19,40 +19,36 @@ class TestPaperCup(TestCase):
     warnings.filterwarnings(action="ignore", message="unclosed", category=ResourceWarning)
     sqs = SQSClient(endpoint_url=PaperCup.PC_AWS_LOCAL_ENDPOINT, aws_access_key_id='test', aws_secret_access_key='test')
     try:
-      sqs.create_queue(PaperCup.PC_QUEUE)
+      sqs.create_queue(PaperCup.PC_SQS_QUEUE)
     except Exception:
       pass # if it fail it's because the queue already exist
 
     sns = SNSClient(endpoint_url=PaperCup.PC_AWS_LOCAL_ENDPOINT, aws_access_key_id='test', aws_secret_access_key='test')
-    sns.create_topic(PaperCup.PC_TOPIC)
+    sns.create_topic(PaperCup.PC_SNS_TOPIC)
 
     self.consumer = ConsumePC()
     self.publisher = PublishPC()
 
-    # Create/Get Queue
-    self.queue_url = self.consumer.sqs.get_queue_url(PaperCup.PC_QUEUE)
-    self.sqs_queue_arn = self.consumer.sqs.get_queue_arn(self.queue_url)
-
     # Subscribe SQS queue to SNS
-    self.publisher.sns.subscribe(self.publisher.topic_arn, self.sqs_queue_arn)
+    self.publisher.sns_client.subscribe_to_queue(PaperCup.PC_SNS_TOPIC, self.consumer.sqs_client.get_queue_arn(PaperCup.PC_SQS_QUEUE))
 
   def tearDown(self):
     """Put back the warnings and clean the queue and topic."""
     warnings.filterwarnings(action="default", message="unclosed", category=ResourceWarning)
-    self.consumer.sqs.delete_queue(self.queue_url)
-    self.publisher.sns.delete_topic(self.publisher.topic_arn)
+    from paper_cup.paper_cup import PaperCup
+    self.consumer.sqs_client.delete_queue(PaperCup.PC_SQS_QUEUE)
+    self.publisher.sns_client.delete_topic(PaperCup.PC_SNS_TOPIC)
 
   def test_consume_instance(self):
     """Check that the Consume instance initialize correctly."""
     # check that we correctly set sqs
-    self.assertTrue(self.consumer.sqs)
-    self.assertTrue(self.consumer.sqs_queue)
+    self.assertTrue(self.consumer.sqs_client)
+    self.assertTrue(self.consumer.sqs_client.queue)
 
   def test_publish_instance(self):
     """Check that the Publish instance initialize correctly."""
     # check that we correctly set sns and sqs sessions
-    self.assertTrue(self.publisher.sns)
-    self.assertTrue(self.publisher.topic_arn)
+    self.assertTrue(self.publisher.sns_client)
 
   def test_bulk_publish(self):
     """Check that it all the messages are sent."""
@@ -64,7 +60,7 @@ class TestPaperCup(TestCase):
     self.publisher.bulk_publish(list_message, list_action)
 
     # Get the Message
-    sqs_msgs = self.consumer.sqs_queue.receive_messages()
+    sqs_msgs = self.consumer.sqs_client.queue.receive_messages()
     sqs_msgs_dict = json.loads(sqs_msgs[0].body)
 
     msg = json.loads(sqs_msgs_dict['Message'])
@@ -116,7 +112,7 @@ class TestPaperCup(TestCase):
 
 
 class DummyAppMessage(dict):
-  """Build a dummy messasge as we expect to have it in the app.
+  """Build a dummy message as we expect to have it in the app.
     The message is a dict with any json valid data.
   """
 
