@@ -26,4 +26,4 @@ jobs:
         pip install -r requirements/test.txt
     - name: Test with unittest
       run: |
-        make test_2
+        python2 -m unittest discover -p 'test_*.py'
