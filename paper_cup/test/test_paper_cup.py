@@ -1,40 +1,31 @@
+# -*- coding:utf-8 -*-
 from unittest import TestCase
-import warnings
 
 
 class TestPaperCup(TestCase):
 
   def setUp(self):
-    """Try to silent the warnings as explained here:
-        https://github.com/boto/boto3/issues/454
-      with solution from here:
-        https://stackoverflow.com/questions/26563711/disabling-python-3-2-resourcewarning
-        https://github.com/pywbem/pywbemtools/issues/883
-        https://github.com/DataBiosphere/azul/issues/1825#issuecomment-637898338
-        # but still show for python >= 3.7
-    """
+    """"""
     from paper_cup.client import SNSClient, SQSClient
     from paper_cup.paper_cup import PaperCup, ConsumePC, PublishPC
 
-    warnings.filterwarnings(action="ignore", message="unclosed", category=ResourceWarning)
-    sqs = SQSClient(endpoint_url=PaperCup.PC_AWS_LOCAL_ENDPOINT, aws_access_key_id='test', aws_secret_access_key='test')
+    sqs = SQSClient(endpoint_url=PaperCup.PC_AWS_LOCAL_ENDPOINT, region=PaperCup.PC_AWS_REGION, aws_access_key_id='test', aws_secret_access_key='test')
     try:
       sqs.create_queue(PaperCup.PC_SQS_QUEUE)
     except Exception:
       pass # if it fail it's because the queue already exist
 
-    sns = SNSClient(endpoint_url=PaperCup.PC_AWS_LOCAL_ENDPOINT, aws_access_key_id='test', aws_secret_access_key='test')
+    sns = SNSClient(endpoint_url=PaperCup.PC_AWS_LOCAL_ENDPOINT, region=PaperCup.PC_AWS_REGION, aws_access_key_id='test', aws_secret_access_key='test')
     sns.create_topic(PaperCup.PC_SNS_TOPIC)
 
     self.consumer = ConsumePC()
     self.publisher = PublishPC()
 
     # Subscribe SQS queue to SNS
-    self.publisher.sns_client.subscribe_to_queue(PaperCup.PC_SNS_TOPIC, self.consumer.sqs_client.get_queue_arn(PaperCup.PC_SQS_QUEUE))
+    self.publisher.sns_client.add_sqs_subscription(PaperCup.PC_SNS_TOPIC, self.consumer.sqs_client.get_queue_arn(PaperCup.PC_SQS_QUEUE))
 
   def tearDown(self):
     """Put back the warnings and clean the queue and topic."""
-    warnings.filterwarnings(action="default", message="unclosed", category=ResourceWarning)
     from paper_cup.paper_cup import PaperCup
     self.consumer.sqs_client.delete_queue(PaperCup.PC_SQS_QUEUE)
     self.publisher.sns_client.delete_topic(PaperCup.PC_SNS_TOPIC)
@@ -127,7 +118,7 @@ class DummyAppMessage(dict):
               {"track_num": 2, "title": "Memories Confined", "duration": "3:25", "active": "True"}
           ]
       }
-    super().__init__(*args, **kwargs)
+    super(DummyAppMessage, self).__init__(*args, **kwargs)
     self.__dict__ = self
 
 
@@ -142,7 +133,7 @@ class DummyQueueMessage(dict):
           "consumer_action_class": "ConsumeDummyPC",
           "sender": "test-sevice",
           "my_data": {
-              "name_kana": "テスト太郎",
+              "name_kana": u"テスト太郎",
               "status": "ok",
               "updated_at": "2021-03-17 14:13:44",
               "is_active": True,
@@ -150,5 +141,5 @@ class DummyQueueMessage(dict):
               "work": None
           }
       }
-    super().__init__(*args, **kwargs)
+    super(DummyQueueMessage, self).__init__(*args, **kwargs)
     self.__dict__ = self

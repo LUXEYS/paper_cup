@@ -1,6 +1,6 @@
 import boto3
 from botocore.exceptions import NoCredentialsError
-from paper_cup.decorators import retry
+from .decorators import retry
 
 
 class SNSClient:
@@ -12,11 +12,20 @@ class SNSClient:
   CUSTOM_RETRY_RULE = {'tries': RETRY_TRIES, 'delay': RETRY_DELAY, 'backoff': RETRY_BACKOFF}
 
   @retry(NoCredentialsError, **CUSTOM_RETRY_RULE)
-  def __init__(self, endpoint_url, region='ap-northeast-1', aws_access_key_id=None, aws_secret_access_key=None):
+  def __init__(self, endpoint_url, region, aws_access_key_id=None, aws_secret_access_key=None):
     """Constructor with already set in options."""
-
     session = boto3.Session(region_name=region, aws_access_key_id=aws_secret_access_key, aws_secret_access_key=aws_secret_access_key)
     self._sns_client = session.client('sns', endpoint_url=endpoint_url)
+
+  @retry(NoCredentialsError, **CUSTOM_RETRY_RULE)
+  def create_topic(self, topic_name):
+    """Create SNS topic by name."""
+    return self._sns_client.create_topic(Name=topic_name)['TopicArn']
+
+  @retry(NoCredentialsError, **CUSTOM_RETRY_RULE)
+  def delete_topic(self, topic_name):
+    """Delete a given SNS topic from it arn."""
+    return self._sns_client.delete_topic(TopicArn=self.get_topic_arn(topic_name))
 
   @retry(NoCredentialsError, **CUSTOM_RETRY_RULE)
   def get_topic_arn(self, topic_name, token=None):
@@ -48,23 +57,13 @@ class SNSClient:
     )
 
   @retry(NoCredentialsError, **CUSTOM_RETRY_RULE)
-  def subscribe_to_queue(self, topic_name, queue_arn):
-    """Topic subscribe to queue."""
+  def add_sqs_subscription(self, topic_name, queue_arn):
+    """Subscribe the sqs queue to the topic."""
     return self._sns_client.subscribe(
         Protocol='sqs',
         TopicArn=self.get_topic_arn(topic_name),
         Endpoint=queue_arn,
     )
-
-  @retry(NoCredentialsError, **CUSTOM_RETRY_RULE)
-  def create_topic(self, topic_name):
-    """Create SNS topic by name."""
-    return self._sns_client.create_topic(Name=topic_name)['TopicArn']
-
-  @retry(NoCredentialsError, **CUSTOM_RETRY_RULE)
-  def delete_topic(self, topic_name):
-    """Delete a given SNS topic from it arn."""
-    return self._sns_client.delete_topic(TopicArn=self.get_topic_arn(topic_name))
 
 
 class SQSClient:
@@ -76,7 +75,7 @@ class SQSClient:
   CUSTOM_RETRY_RULE = {'tries': RETRY_TRIES, 'delay': RETRY_DELAY, 'backoff': RETRY_BACKOFF}
 
   @retry(NoCredentialsError, **CUSTOM_RETRY_RULE)
-  def __init__(self, endpoint_url, region='ap-northeast-1', aws_access_key_id=None, aws_secret_access_key=None):
+  def __init__(self, endpoint_url, region, aws_access_key_id=None, aws_secret_access_key=None):
     """Constructor with already set in options."""
     session = boto3.Session(region_name=region, aws_access_key_id=aws_secret_access_key, aws_secret_access_key=aws_secret_access_key)
     self._sqs_client = session.client('sqs', endpoint_url=endpoint_url)

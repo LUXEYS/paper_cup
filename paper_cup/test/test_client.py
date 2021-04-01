@@ -1,14 +1,14 @@
 from unittest import TestCase
 
-from paper_cup.client import SNSClient, SQSClient
 from paper_cup import PaperCup
+from paper_cup.client import SNSClient, SQSClient
 
 
 class TestSNSClient(TestCase):
 
   def setUp(self):
     """."""
-    self.sns_client = SNSClient(PaperCup.PC_AWS_LOCAL_ENDPOINT)
+    self.sns_client = SNSClient(PaperCup.PC_AWS_LOCAL_ENDPOINT, region=PaperCup.PC_AWS_REGION)
 
   def test_instance(self):
     """Check that the instance initialize correctly."""
@@ -57,19 +57,19 @@ class TestSNSClient(TestCase):
     self.sns_client.create_topic(PaperCup.PC_SNS_TOPIC)
 
     # create a queue
-    sqs_client = SQSClient(PaperCup.PC_AWS_LOCAL_ENDPOINT)
+    sqs_client = SQSClient(PaperCup.PC_AWS_LOCAL_ENDPOINT, region=PaperCup.PC_AWS_REGION)
     sqs_client.create_queue(PaperCup.PC_SQS_QUEUE)
     queue_arn = sqs_client.get_queue_arn(PaperCup.PC_SQS_QUEUE)
 
-    # now we can subscribe the topic to the queue
-    self.sns_client.subscribe_to_queue(PaperCup.PC_SNS_TOPIC, queue_arn)
+    # now we can subscribe the queue to the topic
+    self.sns_client.add_sqs_subscription(PaperCup.PC_SNS_TOPIC, queue_arn)
 
 
 class TestSQSClient(TestCase):
 
   def test_instance(self):
     """Check that the instance initialize correctly."""
-    sqs_client = SQSClient(PaperCup.PC_AWS_LOCAL_ENDPOINT)
+    sqs_client = SQSClient(PaperCup.PC_AWS_LOCAL_ENDPOINT, region=PaperCup.PC_AWS_REGION)
     # check that we correctly set an sqs session
     self.assertTrue(sqs_client._sqs_client)
     self.assertTrue(sqs_client._sqs_resource)

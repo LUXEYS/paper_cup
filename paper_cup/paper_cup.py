@@ -1,19 +1,18 @@
 import json
-
 from .client import SNSClient, SQSClient
 
 
 class PaperCup(object):
   """Publisher and subscribe settings."""
   PC_ENABLE = True
-  PC_LISTEN = ['service'] # list of service name for message to process ex: cas listen only 'booking' so for cas PC_LISTEN = ['booking']
-  PC_SENDER = 'service' # name of the app that send the message ex: 'booking'
+  PC_SERVICE_LISTEN = ['service'] # list of service name for message to process ex: ['my_other_app']
+  PC_SERVICE_SENDER = 'service' # name of the app that send the message ex: 'my_app'
 
-  DEFAULT_CONSUME_CLIENT = 'SQS'
-  DEFAULT_PUBLISH_CLIENT = 'SNS'
+  PC_DEFAULT_CONSUME_CLIENT = 'SQS'
+  PC_DEFAULT_PUBLISH_CLIENT = 'SNS'
 
-  SUPPORTED_PUBLISH_CLIENT = ['SNS', 'SQS']
-  SUPPORTED_CONSUME_CLIENT = ['SQS']
+  PC_SUPPORTED_PUBLISH_CLIENT = ['SNS', 'SQS']
+  PC_SUPPORTED_CONSUME_CLIENT = ['SQS']
 
   PC_SNS_TOPIC = 'topic'
   PC_SQS_QUEUE = 'queue'
@@ -22,6 +21,8 @@ class PaperCup(object):
   PC_AWS_ACCESS_KEY_ID = 'test'
   PC_AWS_SECRET_ACCESS_KEY_ID = 'test'
   PC_AWS_LOCAL_ENDPOINT = 'http://192.168.56.1:9010' # we use moto
+
+  PC_AWS_REGION = 'ap-northeast-1'
 
   # set default attribut values
   sns_client = False
@@ -34,13 +35,13 @@ class PublishPC(PaperCup):
   def __init__(self, *args, **kwargs):
     """"""
     if self.PC_ENABLE:
-      client = kwargs.get('client', PaperCup.DEFAULT_PUBLISH_CLIENT)
-      assert(client in PaperCup.SUPPORTED_PUBLISH_CLIENT)
+      client = kwargs.get('client', PaperCup.PC_DEFAULT_PUBLISH_CLIENT)
+      assert(client in PaperCup.PC_SUPPORTED_PUBLISH_CLIENT)
 
       if client == 'SNS':
-        self.sns_client = SNSClient(self.PC_AWS_LOCAL_ENDPOINT, aws_access_key_id=self.PC_AWS_ACCESS_KEY_ID, aws_secret_access_key=self.PC_AWS_SECRET_ACCESS_KEY_ID)
+        self.sns_client = SNSClient(self.PC_AWS_LOCAL_ENDPOINT, region=self.PC_AWS_REGION, aws_access_key_id=self.PC_AWS_ACCESS_KEY_ID, aws_secret_access_key=self.PC_AWS_SECRET_ACCESS_KEY_ID)
       elif client == 'SQS':
-        self.sqs_client = SQSClient(self.PC_AWS_LOCAL_ENDPOINT, aws_access_key_id=self.PC_AWS_ACCESS_KEY_ID, aws_secret_access_key=self.PC_AWS_SECRET_ACCESS_KEY_ID)
+        self.sqs_client = SQSClient(self.PC_AWS_LOCAL_ENDPOINT, region=self.PC_AWS_REGION, aws_access_key_id=self.PC_AWS_ACCESS_KEY_ID, aws_secret_access_key=self.PC_AWS_SECRET_ACCESS_KEY_ID)
         self.sqs_client.queue = self.sqs_client.get_queue_by_name(self.PC_SQS_QUEUE)
 
   def publish(self, message, action):
@@ -56,7 +57,7 @@ class PublishPC(PaperCup):
     class_name = self.__class__.__name__
     message['consumer_action_class'] = class_name.replace('Publish', 'Consume')
     message['action'] = action
-    message['sender'] = self.PC_SENDER
+    message['sender'] = self.PC_SERVICE_SENDER
     return message
 
   def bulk_publish(self, list_message, list_action):
@@ -87,11 +88,11 @@ class ConsumePC(PaperCup):
   def __init__(self, *args, **kwargs):
     """"""
     if self.PC_ENABLE:
-      client = kwargs.get('client', PaperCup.DEFAULT_CONSUME_CLIENT)
-      assert(client in PaperCup.SUPPORTED_CONSUME_CLIENT)
+      client = kwargs.get('client', PaperCup.PC_DEFAULT_CONSUME_CLIENT)
+      assert(client in PaperCup.PC_SUPPORTED_CONSUME_CLIENT)
 
       if client == 'SQS':
-        self.sqs_client = SQSClient(self.PC_AWS_LOCAL_ENDPOINT, aws_access_key_id=self.PC_AWS_ACCESS_KEY_ID, aws_secret_access_key=self.PC_AWS_SECRET_ACCESS_KEY_ID)
+        self.sqs_client = SQSClient(self.PC_AWS_LOCAL_ENDPOINT, region=self.PC_AWS_REGION, aws_access_key_id=self.PC_AWS_ACCESS_KEY_ID, aws_secret_access_key=self.PC_AWS_SECRET_ACCESS_KEY_ID)
         self.sqs_client.queue = self.sqs_client.get_queue_by_name(self.PC_SQS_QUEUE)
 
   def consume(self):
@@ -122,7 +123,7 @@ class ConsumePC(PaperCup):
     sender = msg.get('sender')
 
     # check that the consumer listen from the sender and do the action
-    if sender in self.PC_LISTEN:
+    if sender in self.PC_SERVICE_LISTEN:
       consumer_action_class = msg.get('consumer_action_class')
       action_class = action_classes.get(consumer_action_class)
       # only handle the action with consumers
