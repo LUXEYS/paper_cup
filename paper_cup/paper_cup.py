@@ -107,13 +107,21 @@ class ConsumePC(PaperCup):
           body = json.loads(message.body)
           msg = json.loads(body['Message'])
 
+          # remove the message before consuming to prevent queue stuck if consume loop take time
+          message.delete()
+          
           if isinstance(msg, list):
+            raised_exception = []
             for one_msg in msg:
-              self._consume_msg(one_msg, action_classes)
+              try:
+                self._consume_msg(one_msg, action_classes)
+              except Exception as e:
+                raised_exception.append(e)
+            if raised_exception:
+              # raise the first one
+              raise raised_exception[0]
           else:
             self._consume_msg(msg, action_classes)
-
-          message.delete()
 
         messages = self.sqs_client.queue.receive_messages(MaxNumberOfMessages=10, VisibilityTimeout=30)
 
