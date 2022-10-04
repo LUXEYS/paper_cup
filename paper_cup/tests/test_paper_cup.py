@@ -1,7 +1,11 @@
 # -*- coding:utf-8 -*-
 from unittest import TestCase
 
+from moto import mock_sqs, mock_sns
 
+# need to have it here to have single mock instance (in tearDown it can find the queue create in setUp)
+@mock_sns
+@mock_sqs
 class TestPaperCup(TestCase):
 
   def setUp(self):
@@ -9,14 +13,22 @@ class TestPaperCup(TestCase):
     from paper_cup.client import SNSClient, SQSClient
     from paper_cup.paper_cup import PaperCup, ConsumePC, PublishPC
 
-    sqs = SQSClient(endpoint_url=PaperCup.PC_AWS_LOCAL_ENDPOINT, region=PaperCup.PC_AWS_REGION, aws_access_key_id='test', aws_secret_access_key='test')
+    sqs = SQSClient(endpoint_url=None, region=PaperCup.PC_AWS_REGION)
     try:
       sqs.create_queue(PaperCup.PC_SQS_QUEUE)
     except Exception:
       pass # if it fail it's because the queue already exist
 
-    sns = SNSClient(endpoint_url=PaperCup.PC_AWS_LOCAL_ENDPOINT, region=PaperCup.PC_AWS_REGION, aws_access_key_id='test', aws_secret_access_key='test')
+    sns = SNSClient(endpoint_url=None, region=PaperCup.PC_AWS_REGION)
     sns.create_topic(PaperCup.PC_SNS_TOPIC)
+
+    ConsumePC.PC_AWS_LOCAL_ENDPOINT = None
+    ConsumePC.PC_AWS_ACCESS_KEY_ID = None
+    ConsumePC.PC_AWS_SECRET_ACCESS_KEY_ID = None
+
+    PublishPC.PC_AWS_LOCAL_ENDPOINT = None
+    PublishPC.PC_AWS_ACCESS_KEY_ID = None
+    PublishPC.PC_AWS_SECRET_ACCESS_KEY_ID = None
 
     self.consumer = ConsumePC()
     self.publisher = PublishPC()
