@@ -60,7 +60,7 @@ class TestPaperCup(TestCase):
     # list of one message
     list_message = [DummyAppMessage()]
     list_action = ['index']
-    import pdb; pdb.set_trace()
+
     self.publisher.bulk_publish(list_message, list_action)
 
     # Get the Message
