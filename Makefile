@@ -1,5 +1,7 @@
 build:
 	python setup.py sdist
+test:
+	python -m unittest
 test_3:
 	python3 -m unittest
 test_2:
