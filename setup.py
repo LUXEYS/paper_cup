@@ -14,7 +14,7 @@ setup(
     description='Microservices communication system powered with paper cup engine!',
     packages=find_packages(),
     install_requires=[
-        'boto3==1.9.170',
+        'boto3>=1.7.24',
     ],
     long_description_content_type="text/markdown",
     long_description=long_description,
