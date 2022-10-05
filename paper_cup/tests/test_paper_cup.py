@@ -4,66 +4,73 @@ from unittest import TestCase
 from moto import mock_sqs, mock_sns
 
 # need to have it here to have single mock instance (in tearDown it can find the queue create in setUp)
-@mock_sns
-@mock_sqs
+
 class TestPaperCup(TestCase):
 
-  def setUp(self):
-    """"""
+  def setup_queue(self):
+    """Common sns and queue setup."""
     from paper_cup.client import SNSClient, SQSClient
     from paper_cup.paper_cup import PaperCup, ConsumePC, PublishPC
 
-    sqs = SQSClient(endpoint_url=None, region=PaperCup.PC_AWS_REGION)
+    with mock_sns(), mock_sqs():
+      sqs = SQSClient(endpoint_url=None, region=PaperCup.PC_AWS_REGION)
 
-    try:
-      sqs.create_queue(PaperCup.PC_SQS_QUEUE)
-    except Exception:
-      pass # if it fail it's because the queue already exist
+      try:
+        sqs.create_queue(PaperCup.PC_SQS_QUEUE)
+      except Exception:
+        pass # if it fail it's because the queue already exist
 
-    sns = SNSClient(endpoint_url=None, region=PaperCup.PC_AWS_REGION)
-    sns.create_topic(PaperCup.PC_SNS_TOPIC)
+      sns = SNSClient(endpoint_url=None, region=PaperCup.PC_AWS_REGION)
+      sns.create_topic(PaperCup.PC_SNS_TOPIC)
 
-    # mock instance don't need these constants
-    ConsumePC.PC_AWS_LOCAL_ENDPOINT = None
-    ConsumePC.PC_AWS_ACCESS_KEY_ID = None
-    ConsumePC.PC_AWS_SECRET_ACCESS_KEY_ID = None
-    PublishPC.PC_AWS_LOCAL_ENDPOINT = None
-    PublishPC.PC_AWS_ACCESS_KEY_ID = None
-    PublishPC.PC_AWS_SECRET_ACCESS_KEY_ID = None
+      # mock instance don't need these constants
+      ConsumePC.PC_AWS_LOCAL_ENDPOINT = None
+      ConsumePC.PC_AWS_ACCESS_KEY_ID = None
+      ConsumePC.PC_AWS_SECRET_ACCESS_KEY_ID = None
+      PublishPC.PC_AWS_LOCAL_ENDPOINT = None
+      PublishPC.PC_AWS_ACCESS_KEY_ID = None
+      PublishPC.PC_AWS_SECRET_ACCESS_KEY_ID = None
 
-    self.consumer = ConsumePC()
-    self.publisher = PublishPC()
+      self.consumer = ConsumePC()
+      self.publisher = PublishPC()
 
-    # Subscribe SQS queue to SNS
-    self.publisher.sns_client.add_sqs_subscription(PaperCup.PC_SNS_TOPIC, self.consumer.sqs_client.get_queue_arn(PaperCup.PC_SQS_QUEUE))
+      # Subscribe SQS queue to SNS
+      self.publisher.sns_client.add_sqs_subscription(PaperCup.PC_SNS_TOPIC, self.consumer.sqs_client.get_queue_arn(PaperCup.PC_SQS_QUEUE))
 
   def test_consume_instance(self):
     """Check that the Consume instance initialize correctly."""
-    # check that we correctly set sqs
-    self.assertTrue(self.consumer.sqs_client)
-    self.assertTrue(self.consumer.sqs_client.queue)
+    with mock_sns(), mock_sqs():
+      self.setup_queue()
+      # check that we correctly set sqs
+      self.assertTrue(self.consumer.sqs_client)
+      self.assertTrue(self.consumer.sqs_client.queue)
 
   def test_publish_instance(self):
     """Check that the Publish instance initialize correctly."""
     # check that we correctly set sns and sqs sessions
-    self.assertTrue(self.publisher.sns_client)
+    with mock_sns(), mock_sqs():
+      self.setup_queue()
+      self.assertTrue(self.publisher.sns_client)
 
   def test_bulk_publish(self):
     """Check that all the messages are sent."""
     import json
-    # list of one message
-    list_message = [DummyAppMessage()]
-    list_action = ['index']
 
-    self.publisher.bulk_publish(list_message, list_action)
+    with mock_sns(), mock_sqs():
+      self.setup_queue()
+      # list of one message
+      list_message = [DummyAppMessage()]
+      list_action = ['index']
 
-    # Get the Message
-    sqs_msgs = self.consumer.sqs_client.queue.receive_messages()
-    sqs_msgs_dict = json.loads(sqs_msgs[0].body)
+      self.publisher.bulk_publish(list_message, list_action)
 
-    msg = json.loads(sqs_msgs_dict['Message'])
-    # check that Message content is a list of messages
-    self.assertTrue(isinstance(msg, list))
+      # Get the Message
+      sqs_msgs = self.consumer.sqs_client.queue.receive_messages()
+      sqs_msgs_dict = json.loads(sqs_msgs[0].body)
+
+      msg = json.loads(sqs_msgs_dict['Message'])
+      # check that Message content is a list of messages
+      self.assertTrue(isinstance(msg, list))
 
   def test_bulk_consume(self):
     """"Check that we can read bulk data."""
@@ -91,13 +98,13 @@ class TestPaperCup(TestCase):
     list_message = [index_message, delete_message]
     list_action = ['index', 'delete']
 
-    dummy_publisher = PublishDummyPC()
-    dummy_publisher.bulk_publish(list_message, list_action)
-
-    dummy_consumer = ConsumeDummyPC()
-
-    # trigg the access to the queue and read the message
-    ConsumePC().consume()
+    with mock_sns(), mock_sqs():
+      self.setup_queue()
+      dummy_publisher = PublishDummyPC()
+      dummy_publisher.bulk_publish(list_message, list_action)
+      dummy_consumer = ConsumeDummyPC()
+      # trigger the access to the queue and read the message
+      ConsumePC().consume()
 
     # check that we have both action
     self.assertTrue(dummy_consumer.result['index'])
