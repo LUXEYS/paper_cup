@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name='paper_cup',
-    version='20.12.4',
+    version='22.10.4',
     license='MIT',
     homepage='https://github.com/LUXEYS/paper_cup',
     author='Luxeys',
@@ -14,7 +14,7 @@ setup(
     description='Microservices communication system powered with paper cup engine!',
     packages=find_packages(),
     install_requires=[
-        'boto3==1.9.170',
+        'boto3>=1.7.24',
     ],
     long_description_content_type="text/markdown",
     long_description=long_description,
