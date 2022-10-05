@@ -37,25 +37,19 @@ class TestPaperCup(TestCase):
     # Subscribe SQS queue to SNS
     self.publisher.sns_client.add_sqs_subscription(PaperCup.PC_SNS_TOPIC, self.consumer.sqs_client.get_queue_arn(PaperCup.PC_SQS_QUEUE))
 
-  def tearDown(self):
-    """Put back the warnings and clean the queue and topic."""
-    from paper_cup.paper_cup import PaperCup
-    self.consumer.sqs_client.delete_queue(PaperCup.PC_SQS_QUEUE)
-    self.publisher.sns_client.delete_topic(PaperCup.PC_SNS_TOPIC)
-
-  def xtest_consume_instance(self):
+  def test_consume_instance(self):
     """Check that the Consume instance initialize correctly."""
     # check that we correctly set sqs
     self.assertTrue(self.consumer.sqs_client)
     self.assertTrue(self.consumer.sqs_client.queue)
 
-  def xtest_publish_instance(self):
+  def test_publish_instance(self):
     """Check that the Publish instance initialize correctly."""
     # check that we correctly set sns and sqs sessions
     self.assertTrue(self.publisher.sns_client)
 
   def test_bulk_publish(self):
-    """Check that it all the messages are sent."""
+    """Check that all the messages are sent."""
     import json
     # list of one message
     list_message = [DummyAppMessage()]
